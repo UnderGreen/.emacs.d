@@ -48,11 +48,10 @@
 
 (straight-use-package 'use-package)
 
-(use-package use-package-ensure-system-package
-  :straight t)
+(use-package use-package-ensure-system-package)
+
 ;;; Help keeping .emacs.d clean!
-(use-package no-littering
-  :straight t)
+(use-package no-littering)
 
 (require 'recentf)
 (add-to-list 'recentf-exclude no-littering-var-directory)
@@ -142,7 +141,6 @@
 
 ;;; Modeline
 (use-package doom-modeline
-  :straight t
   :init
   (doom-modeline-mode 1)
   :config
@@ -150,7 +148,6 @@
 
 ;;; Theme
 (use-package doom-themes
-  :straight t
   :custom
   (doom-dracula-brighter-modeline t)
   (doom-dracula-brighter-comments nil)
@@ -162,8 +159,7 @@
   (load-theme 'doom-dracula t)
   (doom-themes-visual-bell-config))
 
-(use-package all-the-icons
-  :straight t)
+(use-package all-the-icons)
 
 ;;; Fonts
 (set-face-attribute 'default nil :font "MesloLGS Nerd Font Mono" :height 190)
@@ -177,17 +173,14 @@
    faces))
 
 ;;; Blackout
-(use-package blackout
-  :straight t)
+(use-package blackout)
 
 (use-package undo-tree                    ; Enable undo-tree, sane undo/redo behavior
-  :straight t
   :blackout
   :init (global-undo-tree-mode)
   :config (setq undo-tree-auto-save-history nil))
 
 (use-package tree-sitter
-  :straight t
   :config
   ;; activate tree-sitter on any buffer containing code for which it has a parser available
   (global-tree-sitter-mode)
@@ -196,11 +189,9 @@
   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
 
 (use-package tree-sitter-langs
-  :straight t
   :after tree-sitter)
 
 (use-package lsp-mode
-  :straight t
   :init
   ;; set prefix for lsp-command-keymap (few alternatives - "C-l", "C-c l")
   (setq lsp-keymap-prefix "C-c l")
@@ -212,13 +203,11 @@
 
 ;; optional if you want which-key integration
 (use-package which-key
-  :straight t
   :blackout
   :config
   (which-key-mode))
 
 (use-package typescript-mode
-  :straight t
   :after tree-sitter
   :config
   ;; we choose this instead of tsx-mode so that eglot can automatically figure out language for server
@@ -233,28 +222,23 @@
   (add-to-list 'tree-sitter-major-mode-language-alist '(typescriptreact-mode . tsx)))
 
 (use-package yaml-mode
-  :straight t
   :defer t
   :hook (yaml-mode . lsp-deferred))
 
 (use-package exec-path-from-shell
-  :straight t
   :config
   (when (memq window-system '(mac ns x))
     (exec-path-from-shell-initialize)))
 
-(use-package magit
-  :straight t)
+(use-package magit)
 
 (use-package selectrum
-  :straight t
   :init
   (selectrum-mode t)
   :config
   (setq prescient-completion-highlight-matches t))
 
 (use-package selectrum-prescient
-  :straight t
   :init
   ;; to make sorting and filtering more intelligent
   (selectrum-prescient-mode t)
@@ -263,10 +247,8 @@
   ;; intelligent over time
   (prescient-persist-mode t))
 
-(use-package groovy-mode
-  :straight t)
+(use-package groovy-mode)
 
 (use-package rg
-  :straight t
   :ensure-system-package
   (rg . ripgrep))
