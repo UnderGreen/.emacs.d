@@ -27,6 +27,12 @@
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 
 ;;; Setup straight
+(setq-default straight-repository-branch "master"
+              straight-fix-org t
+              straight-fix-flycheck t
+              straight-use-package-by-default t
+              straight-check-for-modifications '(check-on-save find-when-checking))
+(setq vc-follow-symlinks t)
 (defvar bootstrap-version)
 (let ((bootstrap-file
        (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
@@ -42,6 +48,8 @@
 
 (straight-use-package 'use-package)
 
+(use-package use-package-ensure-system-package
+  :straight t)
 ;;; Help keeping .emacs.d clean!
 (use-package no-littering
   :straight t)
@@ -124,8 +132,6 @@
  ;; ServerAliveInterval 10
  ;; ServerAliveCountMax 10
 
- vc-follow-symlinks t ; open symlinks, don't ask confusing questions
-
  ring-bell-function 'ignore ; be quiet
 
  browse-url-browser-function 'eww-browse-url ; use a text browser --great for clicking documentation links
@@ -134,16 +140,13 @@
 ;;; Lockfiles unfortunately cause more pain than benefit
 (setq create-lockfiles nil)
 
-;;; Fonts
-(set-face-attribute 'default nil :font "MesloLGS Nerd Font Mono" :height 190)
-(let ((faces '(mode-line
-               mode-line-buffer-id
-               mode-line-emphasis
-               mode-line-highlight
-               mode-line-inactive)))
-  (mapc
-   (lambda (face) (set-face-attribute face nil :font "MesloLGS Nerd Font Mono" :height 170))
-   faces))
+;;; Modeline
+(use-package doom-modeline
+  :straight t
+  :init
+  (doom-modeline-mode 1)
+  :config
+  (setq doom-modeline-height 15))
 
 ;;; Theme
 (use-package doom-themes
@@ -162,20 +165,24 @@
 (use-package all-the-icons
   :straight t)
 
-(use-package doom-modeline
-  :straight t
-  :init
-  (doom-modeline-mode 1)
-  :config
-  (setq doom-modeline-height 15))
+;;; Fonts
+(set-face-attribute 'default nil :font "MesloLGS Nerd Font Mono" :height 190)
+(let ((faces '(mode-line
+               mode-line-buffer-id
+               mode-line-emphasis
+               mode-line-highlight
+               mode-line-inactive)))
+  (mapc
+   (lambda (face) (set-face-attribute face nil :font "MesloLGS Nerd Font Mono" :height 170))
+   faces))
 
-;;; Diminish
-(use-package diminish
+;;; Blackout
+(use-package blackout
   :straight t)
 
 (use-package undo-tree                    ; Enable undo-tree, sane undo/redo behavior
   :straight t
-  :diminish
+  :blackout
   :init (global-undo-tree-mode)
   :config (setq undo-tree-auto-save-history nil))
 
@@ -206,7 +213,7 @@
 ;; optional if you want which-key integration
 (use-package which-key
   :straight t
-  :diminish
+  :blackout
   :config
   (which-key-mode))
 
@@ -255,3 +262,11 @@
   ;; to save your command history on disk, so the sorting gets more
   ;; intelligent over time
   (prescient-persist-mode t))
+
+(use-package groovy-mode
+  :straight t)
+
+(use-package rg
+  :straight t
+  :ensure-system-package
+  (rg . ripgrep))
