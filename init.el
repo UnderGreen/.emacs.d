@@ -80,6 +80,7 @@
           (if (and (fboundp 'display-line-numbers-mode) (display-graphic-p))
               #'display-line-numbers-mode
             #'linum-mode))
+(setq kill-whole-line t)
 
 ;;; Put Emacs auto-save and backup files to /tmp/ or C:/Temp/
 (defconst emacs-tmp-dir (expand-file-name (format "emacs%d" (user-uid)) temporary-file-directory))
@@ -172,6 +173,20 @@
    (lambda (face) (set-face-attribute face nil :font "MesloLGS Nerd Font Mono" :height 170))
    faces))
 
+;; Enable rich annotations using the Marginalia package
+(use-package marginalia
+  ;; Either bind `marginalia-cycle' globally or only in the minibuffer
+  :bind (("M-A" . marginalia-cycle)
+         :map minibuffer-local-map
+         ("M-A" . marginalia-cycle))
+
+  ;; The :init configuration is always executed (Not lazy!)
+  :init
+
+  ;; Must be in the :init section of use-package such that the mode gets
+  ;; enabled right away. Note that this forces loading the package.
+  (marginalia-mode))
+
 ;;; Blackout
 (use-package blackout)
 
@@ -226,9 +241,11 @@
   :hook (yaml-mode . lsp-deferred))
 
 (use-package exec-path-from-shell
+  :if (memq window-system '(mac ns))
+  :init
+  (setq exec-path-from-shell-arguments '("-l"))
   :config
-  (when (memq window-system '(mac ns x))
-    (exec-path-from-shell-initialize)))
+  (exec-path-from-shell-initialize))
 
 (use-package magit)
 

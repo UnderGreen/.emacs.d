@@ -16,6 +16,7 @@
  ("hydra" . "317e1de33086637579a7aeb60f77ed0405bf359b")
  ("lsp-mode" . "feea50128b9af3e455dcfcd7d105504594a300f0")
  ("magit" . "cfe5a1260bf19191adab837e90acc1004529a0c9")
+ ("marginalia" . "ddba3a384916d83b68527379bbdf01161201853e")
  ("markdown-mode" . "92d037504742cb3e579f1f488bc3fc23c648ff29")
  ("melpa" . "e0efb01cd7b9d2cd9099e5937e62bf80ef65b9ca")
  ("no-littering" . "1d5ac2720662aa60a33ff916dc9402e61c65064b")
