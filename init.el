@@ -240,6 +240,26 @@
   :defer t
   :hook (yaml-mode . lsp-deferred))
 
+(use-package terraform-mode
+  :defer t
+  :hook (terraform-mode . terraform-format-on-save-mode))
+
+(use-package go-mode
+  :defer t
+  :hook (go-mode . lsp-deferred))
+
+(use-package lsp-docker
+  :config
+  (defvar lsp-docker-client-packages
+    '(lsp-clients lsp-go))
+  (setq lsp-docker-client-configs
+        '((:server-id gopls :docker-server-id gopls-docker :server-command "gopls")
+          ))
+  (lsp-docker-init-clients
+   :path-mappings '(("~/go/src/github.com/gravitational/gravity" . "/projects"))
+   :client-packages lsp-docker-client-packages
+   :client-configs lsp-docker-client-configs))
+
 (use-package exec-path-from-shell
   :if (memq window-system '(mac ns))
   :init
@@ -264,8 +284,27 @@
   ;; intelligent over time
   (prescient-persist-mode t))
 
+;;;;; ctrlf
+;; single-buffer text search in Emacs
+;; [[https://github.com/raxod502/ctrlf#usage][ctrlf]]
+(use-package ctrlf
+  :straight t
+  :init (ctrlf-mode +1))
+
 (use-package groovy-mode)
 
 (use-package rg
   :ensure-system-package
   (rg . ripgrep))
+
+(use-package corfu
+  :custom
+  (corfu-auto t)
+  (corfu-cycle t)
+  :init
+  (global-corfu-mode))
+
+(setq completion-cycle-threshold 3)
+(setq tab-always-indent 'complete)
+(setq read-extended-command-predicate
+  #'command-completion-default-include-p)
