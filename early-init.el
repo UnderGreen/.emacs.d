@@ -4,7 +4,7 @@
 (setq package-enable-at-startup nil)
 (setq inhibit-default-init nil)
 
-(setq native-comp-async-report-warnings-errors nil)
+(setq-default native-comp-async-report-warnings-errors nil)
 
 (defvar default-file-name-handler-alist file-name-handler-alist)
 (setq file-name-handler-alist nil)
@@ -19,6 +19,7 @@
    (lambda () (unless (frame-focus-state) (garbage-collect)))))
 
 (defun +reset-init-values ()
+  "Reset init values after start."
   (run-with-idle-timer
    1 nil
    (lambda ()
