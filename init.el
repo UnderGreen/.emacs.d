@@ -23,6 +23,7 @@
 ;;           (lambda () (elp-results) (elp-restore-package (intern file))))
 
 (setq initial-buffer-choice t) ;;*scratch*
+(setq read-process-output-max (* 6 512 1024))  ;; Increase read size per process
 
 (setq-default server-auth-dir (concat user-emacs-directory (convert-standard-filename "server/")))
 (setq-default emacs-tmp-dir (concat user-emacs-directory (convert-standard-filename "tmp/")))
@@ -72,7 +73,7 @@
 ;; start every frame maximized
 (add-to-list 'default-frame-alist '(fullscreen . maximized))
 
-(defvar elpaca-installer-version 0.2)
+(defvar elpaca-installer-version 0.3)
 (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
 (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
 (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
@@ -158,8 +159,15 @@ NAME and ARGS are in `use-package'."
 
   ;; Emacs 28: Hide commands in M-x which do not work in the current mode.
   ;; Vertico commands are hidden in normal buffers.
-  ;; (setq read-extended-command-predicate
-  ;;       #'command-completion-default-include-p)
+  (setq read-extended-command-predicate
+        #'command-completion-default-include-p)
+
+  ;; TAB cycle if there are only few candidates
+  (setq completion-cycle-threshold 3)
+  
+  ;; Enable indentation+completion using the TAB key.
+  ;; `completion-at-point' is often bound to M-TAB.
+  (setq tab-always-indent 'complete)
 
   ;; Enable recursive minibuffers
   (setq enable-recursive-minibuffers t))
@@ -169,16 +177,16 @@ NAME and ARGS are in `use-package'."
   :config
   (load-theme 'doom-one t))
 
-(use-package tree-sitter
-  :config
-  ;; activate tree-sitter on any buffer containing code for which it has a parser available
-  (global-tree-sitter-mode)
-  ;; you can easily see the difference tree-sitter-hl-mode makes for python, ts or tsx
-  ;; by switching on and off
-  (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
+;; (use-package tree-sitter
+;;   :config
+;;   ;; activate tree-sitter on any buffer containing code for which it has a parser available
+;;   (global-tree-sitter-mode)
+;;   ;; you can easily see the difference tree-sitter-hl-mode makes for python, ts or tsx
+;;   ;; by switching on and off
+;;   (add-hook 'tree-sitter-after-on-hook #'tree-sitter-hl-mode))
 
-(use-package tree-sitter-langs
-  :after tree-sitter)
+;; (use-package tree-sitter-langs
+;;   :after tree-sitter)
 
 (use-package all-the-icons
   :demand t)
@@ -210,9 +218,20 @@ NAME and ARGS are in `use-package'."
   (setq lsp-keymap-prefix "C-c l")
   :hook (;; replace XXX-mode with concrete major-mode(e. g. python-mode)
          (c-mode . lsp-deferred)
+         (go-mode . lsp-deferred)
+         (terraform-mode . lsp-deferred)
          ;; if you want which-key integration
          (lsp-mode . lsp-enable-which-key-integration))
-  :commands (lsp lsp-deferred))
+  :commands (lsp lsp-deferred)
+  :custom
+  (lsp-completion-provider :none)       ; Use corfu instead for lsp completions
+  :config
+  (setq lsp-terraform-ls-enable-show-reference t)
+  (setq lsp-semantic-tokens-enable t)
+  (setq lsp-semantic-tokens-honor-refresh-requests t)
+  (setq lsp-enable-links t)
+  (setq lsp-terraform-ls-prefill-required-fields t)
+  (setq lsp-terraform-ls-validate-on-save t))
 
 (use-package yaml-mode
   :defer t
@@ -245,21 +264,23 @@ NAME and ARGS are in `use-package'."
 
 ;; Enable vertico
 (use-package vertico
-  :init
-  (vertico-mode)
-
+  :custom
   ;; Different scroll margin
   ;; (setq vertico-scroll-margin 0)
 
   ;; Show more candidates
-  ;; (setq vertico-count 20)
+  (setq vertico-count 12)
 
   ;; Grow and shrink the Vertico minibuffer
-  ;; (setq vertico-resize t)
+  (setq vertico-resize t)
 
   ;; Optionally enable cycling for `vertico-next' and `vertico-previous'.
-  ;; (setq vertico-cycle t)
-  )
+  (setq vertico-cycle nil)
+  :init
+  (vertico-mode)
+  :bind (:map vertico-map
+              ("<tab>" . vertico-insert)
+              ("<escape>" . minibuffer-keyboard-quit)))
 
 ;; Optionally use the `orderless' completion style.
 (use-package orderless
@@ -270,6 +291,19 @@ NAME and ARGS are in `use-package'."
   (setq completion-styles '(orderless basic)
         completion-category-defaults nil
         completion-category-overrides '((file (styles partial-completion)))))
+
+(use-package marginalia
+  :after vertico
+  :custom
+  (marginalia-max-relative-age 0)
+  (marginalia-align 'right)
+  :init (marginalia-mode 1))
+
+(use-package all-the-icons-completion
+  :after (marginalia all-the-icons)
+  :hook (marginalia-mode . all-the-icons-completion-marginalia-setup)
+  :init
+  (all-the-icons-completion-mode))
 
 ;; Example configuration for Consult
 (use-package consult
@@ -388,11 +422,60 @@ NAME and ARGS are in `use-package'."
   ;;;; 3. locate-dominating-file
   ;; (setq consult-project-function (lambda (_) (locate-dominating-file "." ".git")))
   ;;;; 4. projectile.el (projectile-project-root)
-  ;; (autoload 'projectile-project-root "projectile")
-  ;; (setq consult-project-function (lambda (_) (projectile-project-root)))
+  (autoload 'projectile-project-root "projectile")
+  (setq consult-project-function (lambda (_) (projectile-project-root)))
   ;;;; 5. No project support
   ;; (setq consult-project-function nil)
   )
+
+(use-package corfu
+  :hook (lsp-completion-mode . gd/corfu-setup-lsp) ; Use corfu for lsp completion
+  :custom
+  (corfu-cycle nil)
+  (corfu-auto t)
+  (corfu-quit-no-match 'separator)
+  (corfu-preselect-first t)        ; Preselect first candidate?
+  (corfu-auto-prefix 2)
+  (corfu-auto-delay 0.25)
+
+  (corfu-min-width 80)
+  (corfu-max-width corfu-min-width)       ; Always have the same width
+  (corfu-count 14)
+  (corfu-scroll-margin 4)
+
+  (corfu-quit-at-boundary nil)
+  (corfu-echo-documentation t)            ; Show documentation in echo area?
+  ;; Works with `indent-for-tab-command'. Make sure tab doesn't indent when you
+  ;; want to perform completion
+  (tab-always-indent 'complete)
+  (completion-cycle-threshold nil)      ; Always show candidates in menu
+  :config
+  (defun corfu-enable-always-in-minibuffer ()
+    "Enable Corfu in the minibuffer if Vertico/Mct are not active."
+    (unless (or (bound-and-true-p mct--active) ; Useful if I ever use MCT
+                (bound-and-true-p vertico--input))
+      (setq-local corfu-auto nil)       ; Ensure auto completion is disabled
+      (corfu-mode 1)))
+  (add-hook 'minibuffer-setup-hook #'corfu-enable-always-in-minibuffer)
+
+  ;; Setup lsp to use corfu for lsp completion
+  (defun gd/corfu-setup-lsp ()
+    "Use orderless completion style with lsp-capf instead of the
+default lsp-passthrough."
+    (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
+          '(orderless)))
+  :init
+  (global-corfu-mode))
+
+;; Use Dabbrev with Corfu!
+(use-package dabbrev
+  :elpaca nil
+  ;; Swap M-/ and C-M-/
+  :bind (("M-/" . dabbrev-completion)
+         ("C-M-/" . dabbrev-expand))
+  ;; Other useful Dabbrev configurations.
+  :custom
+  (dabbrev-ignored-buffer-regexps '("\\.\\(?:pdf\\|jpe?g\\|png\\)\\'")))
 
 (use-package git-modes)
 (use-package magit
@@ -430,11 +513,30 @@ NAME and ARGS are in `use-package'."
               ("s-s" . projectile-persp-switch-project)))
 
 (use-package dockerfile-mode)
+(use-package terraform-mode)
+
+(use-package go-mode)
+
+(use-package restclient)
+
+(use-package js
+  :elpaca nil
+  :bind (:map js-mode-map
+              ("M-." . nil)))
 
 (defun lsp-install-save-hooks ()
   "Setup lsp-related hooks."
   (add-hook 'before-save-hook #'lsp-format-buffer t t))
+
+;; Set up before-save hooks to format buffer and add/delete imports.
+;; Make sure you don't have other gofmt/goimports hooks enabled.
+(defun lsp-go-install-save-hooks ()
+  "Setup lsp-related hooks for imports."
+  (add-hook 'before-save-hook #'lsp-organize-imports t t))
+
 (add-hook 'c-mode-hook #'lsp-install-save-hooks)
+(add-hook 'go-mode-hook #'lsp-install-save-hooks)
+(add-hook 'go-mode-hook #'lsp-go-install-save-hooks)
 
 (provide 'init)
 ;;; init.el ends here
